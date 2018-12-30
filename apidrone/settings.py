@@ -26,7 +26,7 @@ SECRET_KEY = 'y6zro-rr#^kx%il6)5z-luc1l*3)8dq+6x*ya9$h@#fkyy_n-r'
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '172.30.1.42',
+    'www.droneonearth.p-e.kr',
     '127.0.0.1',
 ]
 
