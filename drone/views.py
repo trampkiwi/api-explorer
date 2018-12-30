@@ -2,8 +2,8 @@
 
 # Create your views here.
 
-from django.http import HttpResponse
+from django.shortcuts import render
 
 
 def index(req):
-    return HttpResponse("Hello. I can officially confirm that this server is operating. Nice.")
+    return render(req, 'drone/index.html')
