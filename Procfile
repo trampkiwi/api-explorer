@@ -1,1 +1,1 @@
-web: gunicorn api-explorer.wsgi
+web: gunicorn apidrone.wsgi
