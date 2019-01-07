@@ -69,7 +69,7 @@
                             var dataArr = new Uint8Array(buffer);
 
                             for(var i = 0; i < dataArr.byteLength/2; i++) { // read elevation data bytewise
-                                var elevation = 256*dataArr[i] + dataArr[i+1]; // retrieve height data from byte array
+                                var elevation = 256*dataArr[2*i] + dataArr[2*i + 1]; // retrieve height data from byte array
                                 vertices[3*i + 2] = -elevation; // since -z => up
                                 console.log(elevation);
                             }
