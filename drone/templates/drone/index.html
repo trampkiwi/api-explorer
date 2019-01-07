@@ -37,7 +37,7 @@
                     this.R = 6371000.0;
                     var h = 2 * Math.PI * this.R / 360;
 
-                    var vertices = this.attributes.position.array;
+                    var vertices = this.vertices;
 
                     /*for(var i=0; i < vertices.length; i++) {
                         // recover x and y coordinates in datamap
@@ -136,7 +136,7 @@
 
                 //camera = new RoverCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000, 37.5886567, 126.9871959);
                 camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000);
-                camera.position.z = 10;
+                camera.position.z = 5;
                 //camera.up = new THREE.Vector3(0,-1,0);
                 //camera.lookAt(new THREE.Vector3(0,0,0));
 
