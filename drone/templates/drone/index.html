@@ -112,6 +112,7 @@
 
                 light = new THREE.DirectionalLight();
                 light.position.set(-1, 0, -1).normalize();
+                light.castShadow = true;
                 scene.add(light);
 
                 //camera = new RoverCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000, 37.5886567, 126.9871959);
@@ -122,6 +123,7 @@
 
                 renderer = new THREE.WebGLRenderer();
                 renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.shadowMap.enabled = true;
                 document.body.appendChild(renderer.domElement);
 
                 //camera.generateGeometry(callback);
@@ -141,9 +143,10 @@
                 //camera.lookAt(new THREE.Vector3(Math.cos(theta),Math.sin(theta),0));
 
                 geometry = new GroundGeometry(37, 126);
-                material = new THREE.MeshBasicMaterial({color: 0xffffff});
-                material.lights = true;
+                material = new THREE.MeshStandardMaterial({color: 0xffffff});
                 ground = new THREE.Mesh(geometry, material);
+                ground.castShadow = true;
+                ground.receiveShadow = true;
                 scene.add(ground);
 
                 renderer.render(scene, camera);
