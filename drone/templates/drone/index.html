@@ -19,8 +19,8 @@
                 }
 
                 generateGeometry(callback) {
-                    var latStr = (lat > 0 ? "N" : "S") + Math.floor(this.lat).toString(); // ex: N37
-                    var longStr = (long > 0 ? "E" : "W") + Math.floor(this.long).toString(); // ex: E127
+                    var latStr = (this.lat > 0 ? "N" : "S") + Math.floor(this.lat).toString(); // ex: N37
+                    var longStr = (this.long > 0 ? "E" : "W") + Math.floor(this.long).toString(); // ex: E127
                     var latlongStr = latStr + longStr; // ex: N37E127
 
                     var latRem = this.lat - Math.floor(this.lat); // to assess the rover's position on the datamap
