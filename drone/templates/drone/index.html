@@ -31,14 +31,14 @@
                     //this.position.set(-1 * (longRem * metresPerLong) + metresPerLong / 2, -1 * (latRem * metresPerLat) + metresPerLat / 2, 0);
                     this.position.set(0,0,10);
 
-                    this.groundGeometry = new THREE.PlaneBufferGeometry(metresPerLong, metresPerLat, 1200, 1200); // the geometry to map the data into
-
                     var datamapReq = new XMLHttpRequest(); // to import .hgt file from server
                     datamapReq.open("GET", "https://s3.ap-northeast-2.amazonaws.com/kiwiprojcdn/elvdata/" + latlongStr + ".hgt");
                     datamapReq.responseType = "arraybuffer";
                     console.log('setup done!');
 
                     datamapReq.onload = function(event) {
+                        var groundGeometry = new THREE.PlaneBufferGeometry(metresPerLong, metresPerLat, 1200, 1200); // the geometry to map the data into
+
                         var dataBuffer = datamapReq.response;
                         if(dataBuffer) {
                             var dataArray = new Uint8Array(dataBuffer);
@@ -51,15 +51,15 @@
                                 // y: + => north, - => south
 
                                 var elevation = 256 * dataArray[idx * 2] + dataArray[idx * 2 + 1];
-                                this.groundGeometry.vertices[Y * 1201 + remX].z = elevation;
+                                groundGeometry.vertices[Y * 1201 + remX].z = elevation;
                             }
 
-                            this.groundGeometry.verticesNeedUpdate = true;
+                            groundGeometry.verticesNeedUpdate = true;
 
                             //this.position.z = dataArray[Math.floor(latRem * 1201) * 1201 + Math.floor(longRem * 1201)] + 1.7; // access the according elevation; ! needs to be changed to support S, W
                         }
 
-                        callback(this.groundGeometry);
+                        callback(groundGeometry);
                     }
 
                     datamapReq.send(null);
