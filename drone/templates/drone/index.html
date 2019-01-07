@@ -19,12 +19,12 @@
                 }
 
                 generateGeometry(callback) {
-                    var latStr = (lat > 0 ? "N" : "S") + Math.floor(lat).toString(); // ex: N37
-                    var longStr = (long > 0 ? "E" : "W") + Math.floor(long).toString(); // ex: E127
+                    var latStr = (lat > 0 ? "N" : "S") + Math.floor(this.lat).toString(); // ex: N37
+                    var longStr = (long > 0 ? "E" : "W") + Math.floor(this.long).toString(); // ex: E127
                     var latlongStr = latStr + longStr; // ex: N37E127
 
-                    var latRem = lat - Math.floor(lat); // to assess the rover's position on the datamap
-                    var longRem = long - Math.floor(long); // "
+                    var latRem = this.lat - Math.floor(this.lat); // to assess the rover's position on the datamap
+                    var longRem = this.long - Math.floor(this.long); // "
                     var metresPerLong = 111319.5; // to convert lat/long pair to metric coordinates
                     var metresPerLat = 111132.9; // ! needs to be calculated accurately according to lat/long
 
