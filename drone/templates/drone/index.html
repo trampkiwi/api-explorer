@@ -8,61 +8,83 @@
         <!-- <script src="http://kiwiprojcdn.herokuapp.com/htdocs/js/rovercamera.js"></script>-->
 
         <script>
-            // issues that need to be fixed start with !
+            // ---- define some functions for later use ----
+            Math.degrees = function(radian) {
+                return radian / (2*Math.PI) * 360;
+            }
 
-            class RoverCamera extends THREE.PerspectiveCamera {
-                constructor(fov, aspratio, nearpln, farpln, lat, long) {
-                    super(fov, aspratio, nearpln, farpln);
+            Math.radians = function(degrees) {
+                return degrees / 360 * (2*Math.PI);
+            }
 
-                    this.lat = lat;
-                    this.long = long;
-                }
+            // ---- define GroundGeometry class ----
+            // ~ disclaimer on the coordinate system
+            // ~ 1 metre corresponds to 1 'three.js coordinate system length'
+            // ~ x axis: - => west, + => east
+            // ~ y axis: - => north, + => south
+            // ~ z axis: - => up, + => down
+            class GroundGeometry extends THREE.PlaneBufferGeometry {
+                constructor(latIdx, longIdx) { // both are floored lat, long
+                    // ---- call super ----
+                    super(1, 1, 1200, 1200);
 
-                generateGeometry(callback) {
-                    var latStr = (this.lat > 0 ? "N" : "S") + Math.floor(this.lat).toString(); // ex: N37
-                    var longStr = (this.long > 0 ? "E" : "W") + Math.floor(this.long).toString(); // ex: E127
-                    var latlongStr = latStr + longStr; // ex: N37E127
+                    // ---- transform vertices to accurately depict earth's surface ----
+                    // ~ the final vertices map will 'look' trapezoidal.
+                    // ~ h: height
+                    // ~ the earth's shape is assumed to be completely spherical,
+                    // ~ and the radius is 6371km = 6371000m.
+                    this.R = 6371000.0;
+                    var h = 2 * Math.PI * this.R / 360;
 
-                    var latRem = this.lat - Math.floor(this.lat); // to assess the rover's position on the datamap
-                    var longRem = this.long - Math.floor(this.long); // "
-                    var metresPerLong = 111319.5; // to convert lat/long pair to metric coordinates
-                    var metresPerLat = 111132.9; // ! needs to be calculated accurately according to lat/long
+                    for(var i=0; i < this.vertices.length; i++) {
+                        // recover x and y coordinates in datamap
+                        var x = i % 1201;
+                        var y = (i - x) / 1201;
+                        // calculate constants
+                        var latRemainder = 1 - (y / 1201);
+                        var width = this.longToM(1, latIdx + latRemainder);
+                        var height = h;
+                        // map the vertex
+                        this.vertices[i].x *= width;
+                        this.vertices[i].y *= height;
+                    }
+                    
+                    // ---- run xhr ----
+                    // construct height datamap request url string
+                    var reqStrLat = (latIdx > 0 ? "N" : "S") + latIdx.toString();
+                    var reqStrLong = (longIdx > 0 ? "E" : "W") + longIdx.toString();
+                    var reqStr = "https://s3.ap-northeast-2.amazonaws.com/kiwiprojcdn/elvdata/" + reqStrLat + reqStrLong + ".hgt";
+                    // make xhr
+                    var req = new XMLHttpRequest();
+                    req.open("GET", reqStr);
+                    req.responseType = "arraybuffer";
+                    req.onload = importElevationData.bind(this);
+                    req.send(null);
 
-                    //this.position.set(-1 * (longRem * metresPerLong) + metresPerLong / 2, -1 * (latRem * metresPerLat) + metresPerLat / 2, 0);
-                    this.position.set(0,0,10);
+                    // ---- generate ground geometry ----
+                    var importElevationData = function() {
+                        var buffer = req.response;
 
-                    var datamapReq = new XMLHttpRequest(); // to import .hgt file from server
-                    datamapReq.open("GET", "https://s3.ap-northeast-2.amazonaws.com/kiwiprojcdn/elvdata/" + latlongStr + ".hgt");
-                    datamapReq.responseType = "arraybuffer";
-                    console.log('setup done!');
+                        if(buffer) {
+                            var dataArr = new Uint8Array(buffer);
 
-                    datamapReq.onload = function(event) {
-                        var groundGeometry = new THREE.PlaneBufferGeometry(metresPerLong, metresPerLat, 1200, 1200); // the geometry to map the data into
-
-                        var dataBuffer = datamapReq.response;
-                        if(dataBuffer) {
-                            var dataArray = new Uint8Array(dataBuffer);
-                            
-                            for(var idx=0; idx < dataArray.byteLength/2; idx++) { // read data bytewise
-                                var remX = 1201 - idx % 1201; // since the vertices array is 'flipped' along the x axis, the data needs to be inverted in order to map correctly
-                                var Y = Math.floor(idx / 1201);
-
-                                // x: + => west, - => east
-                                // y: + => north, - => south
-
-                                var elevation = 256 * dataArray[idx * 2] + dataArray[idx * 2 + 1];
-                                groundGeometry.vertices[Y * 1201 + remX].z = elevation;
+                            for(var i = 0; i < dataArr.byteLength/2; i++) { // read elevation data bytewise
+                                var elevation = 256*dataArr[i] + dataArr[i+1]; // retrieve height data from byte array
+                                this.vertices[i].z = -elevation; // since -z => up
                             }
 
-                            groundGeometry.verticesNeedUpdate = true;
-
-                            //this.position.z = dataArray[Math.floor(latRem * 1201) * 1201 + Math.floor(longRem * 1201)] + 1.7; // access the according elevation; ! needs to be changed to support S, W
+                            this.verticesNeedUpdate = true;
+                        } else {
+                            console.log("There was a faliure while reading height data map. (index.html: line 134)");
                         }
-
-                        callback(groundGeometry);
                     }
+                }
 
-                    datamapReq.send(null);
+                longToM(longDeg, atLat) { // convert degree-length longDeg to m at latitude atLat
+                    var r = this.R * Math.cos(Math.radians(Math.abs(atLat))); // radius of cross-section circle
+                    var c = 2 * Math.PI * r; // circumference of the cross-section
+                    var l = c / 360 * longDeg * 1000; // calculated m
+                    return l;
                 }
             }
         </script>
