@@ -47,8 +47,8 @@
                         var width = this.longToM(1, latIdx + latRemainder);
                         var height = h;
                         // map the vertex
-                        vertices[3*i].x *= width;
-                        vertices[3*i + 1].y *= height;
+                        vertices[3*i] *= width;
+                        vertices[3*i + 1] *= height;
                     }
                     
                     // ---- run xhr ----
@@ -72,7 +72,7 @@
 
                             for(var i = 0; i < dataArr.byteLength/2; i++) { // read elevation data bytewise
                                 var elevation = 256*dataArr[i] + dataArr[i+1]; // retrieve height data from byte array
-                                vertices[3*i + 2].z = -elevation; // since -z => up
+                                vertices[3*i + 2] = -elevation; // since -z => up
                             }
 
                             this.attributes.position.needsUpdate = true;
