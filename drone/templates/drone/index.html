@@ -8,25 +8,30 @@
         <!-- <script src="http://kiwiprojcdn.herokuapp.com/htdocs/js/rovercamera.js"></script>-->
 
         <script>
+            // issues that need to be fixed start with !
+
             class RoverCamera extends THREE.PerspectiveCamera {
                 constructor(fov, aspratio, nearpln, farpln, lat, long) {
                     super(fov, aspratio, nearpln, farpln);
 
                     this.lat = lat;
                     this.long = long;
-                    var latStr = (lat > 0 ? "N" : "S") + Math.floor(lat).toString();
-                    var longStr = (long > 0 ? "E" : "W") + Math.floor(long).toString();
-                    var latlongStr = latStr + longStr;
+                }
 
-                    var latRem = lat - Math.floor(lat);
-                    var longRem = long - Math.floor(long);
-                    var metresPerLong = 111319.5;
-                    var metresPerLat = 111132.9;
+                generateGeometry(callback) {
+                    var latStr = (lat > 0 ? "N" : "S") + Math.floor(lat).toString(); // ex: N37
+                    var longStr = (long > 0 ? "E" : "W") + Math.floor(long).toString(); // ex: E127
+                    var latlongStr = latStr + longStr; // ex: N37E127
+
+                    var latRem = lat - Math.floor(lat); // to assess the rover's position on the datamap
+                    var longRem = long - Math.floor(long); // "
+                    var metresPerLong = 111319.5; // to convert lat/long pair to metric coordinates
+                    var metresPerLat = 111132.9; // ! needs to be calculated accurately according to lat/long
 
                     //this.position.set(-1 * (longRem * metresPerLong) + metresPerLong / 2, -1 * (latRem * metresPerLat) + metresPerLat / 2, 0);
                     this.position.set(0,0,10);
 
-                    this.groundGeometry = new THREE.PlaneBufferGeometry(metresPerLong, metresPerLat, 1200, 1200);
+                    this.groundGeometry = new THREE.PlaneBufferGeometry(metresPerLong, metresPerLat, 1200, 1200); // the geometry to map the data into
 
                     var datamapReq = new XMLHttpRequest(); // to import .hgt file from server
                     datamapReq.open("GET", "https://s3.ap-northeast-2.amazonaws.com/kiwiprojcdn/elvdata/" + latlongStr + ".hgt");
@@ -34,23 +39,27 @@
                     console.log('setup done!');
 
                     datamapReq.onload = function(event) {
-                        console.log('lul');
                         var dataBuffer = datamapReq.response;
                         if(dataBuffer) {
                             var dataArray = new Uint8Array(dataBuffer);
                             
-                            for(var idx=0; idx < dataArray.byteLength/2; idx++) {
-                                var remX = 1201 - idx % 1201;
+                            for(var idx=0; idx < dataArray.byteLength/2; idx++) { // read data bytewise
+                                var remX = 1201 - idx % 1201; // since the vertices array is 'flipped' along the x axis, the data needs to be inverted in order to map correctly
                                 var Y = Math.floor(idx / 1201);
 
+                                // x: + => west, - => east
+                                // y: + => north, - => south
+
                                 var elevation = 256 * dataArray[idx * 2] + dataArray[idx * 2 + 1];
-                                groundGeometry.vertices[Y * 1201 + remX].z = elevation;
+                                this.groundGeometry.vertices[Y * 1201 + remX].z = elevation;
                             }
 
-                            groundGeometry.verticesNeedUpdate = true;
+                            this.groundGeometry.verticesNeedUpdate = true;
 
-                            //this.position.z = dataArray[Math.floor(latRem * 1201) * 1201 + Math.floor(longRem * 1201)] + 1.7; // access the according elevation; needs to be changed to support S, W
+                            //this.position.z = dataArray[Math.floor(latRem * 1201) * 1201 + Math.floor(longRem * 1201)] + 1.7; // access the according elevation; ! needs to be changed to support S, W
                         }
+
+                        callback(this.groundGeometry);
                     }
 
                     datamapReq.send(null);
@@ -73,20 +82,24 @@
                 scene = new THREE.Scene();
                 camera = new RoverCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000, 37.5886567, 126.9871959);
                 //camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000);
-                camera.position.z = 5;
+                camera.position.z = 1000;
 
                 renderer = new THREE.WebGLRenderer();
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 document.body.appendChild(renderer.domElement);
 
-                //geometry = camera.groundGeometry;
+                camera.generateGeometry(callback);
                 //geometry = new THREE.PlaneBufferGeometry(100,100,1,1);
-                geometry = new THREE.BoxGeometry(1,1,1);
-                material = new THREE.MeshBasicMaterial({color: 0xffffff});
-                ground = new THREE.Mesh(geometry, material);
+                //geometry = new THREE.BoxGeometry(1,1,1);
 
-                scene.add(ground);
-                renderer.render(scene, camera);
+                var callback = function(gmt) {
+                    geometry = gmt;
+                    material = new THREE.MeshDepthMaterial();
+                    ground = new THREE.Mesh(geometry, material);
+
+                    scene.add(ground);
+                    renderer.render(scene, camera);
+                }
 
                 //camera.up = new THREE.Vector3(0,0,1);
                 //camera.lookAt(new THREE.Vector3(Math.cos(theta),Math.sin(theta),0));
