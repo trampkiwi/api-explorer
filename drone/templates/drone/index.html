@@ -20,9 +20,9 @@
             // ---- define GroundGeometry class ----
             // ~ disclaimer on the coordinate system
             // ~ 1 metre corresponds to 1 'three.js coordinate system length'
-            // ~ x axis: - => west, + => east
+            // ~ x axis: - => east, + => west
             // ~ y axis: - => north, + => south
-            // ~ z axis: - => up, + => down
+            // ~ z axis: - => down, + => up
             class GroundGeometry extends THREE.PlaneBufferGeometry {
                 constructor(latIdx, longIdx) { // both are floored lat, long
                     // ---- call super ----
@@ -37,7 +37,7 @@
                     this.R = 6371000.0;
                     var h = 2 * Math.PI * this.R / 360;
 
-                    var vertices = this.vertices;
+                    var vertices = this.attributes.position.array;
 
                     /*for(var i=0; i < vertices.length; i++) {
                         // recover x and y coordinates in datamap
@@ -57,7 +57,7 @@
                     
                     // ---- run xhr ----
                     // construct height datamap request url string
-                    /*var reqStrLat = (latIdx > 0 ? "N" : "S") + latIdx.toString();
+                    var reqStrLat = (latIdx > 0 ? "N" : "S") + latIdx.toString();
                     var reqStrLong = (longIdx > 0 ? "E" : "W") + longIdx.toString();
                     var reqStr = "https://s3.ap-northeast-2.amazonaws.com/kiwiprojcdn/elvdata/" + reqStrLat + reqStrLong + ".hgt";
                     // make xhr
@@ -75,6 +75,7 @@
                             var x = 0;
                             var y = 0;
                             for(var i = 0; i < dataArr.byteLength/2; i++) { // read elevation data bytewise
+                                console.log(x.toString() + ", " + y.toString());
                                 if(x > 10) {
                                     x = 0;
                                     i += 1201 - 11;
@@ -101,7 +102,8 @@
 
                     // ---- resume xhr ----
                     req.onload = importElevationData.bind(this);
-                    req.send(null);*/
+                    req.send(null);
+
                     console.log(vertices);
                 }
 
