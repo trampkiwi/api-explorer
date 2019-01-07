@@ -105,14 +105,14 @@
             var theta = 0;
 
             init();
-            animate();
+            //animate();
 
             function init() {
                 scene = new THREE.Scene();
 
-                /*light = new THREE.DirectionalLight();
+                light = new THREE.DirectionalLight();
                 light.position.set(-1, 0, -1).normalize();
-                scene.add(light);*/
+                scene.add(light);
 
                 //camera = new RoverCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000, 37.5886567, 126.9871959);
                 camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000);
@@ -141,19 +141,22 @@
                 //camera.lookAt(new THREE.Vector3(Math.cos(theta),Math.sin(theta),0));
 
                 geometry = new GroundGeometry(37, 126);
-                material = new THREE.MeshBasicMaterial({color: 0x000000});
-                material.wireframe = true;
+                material = new THREE.MeshBasicMaterial({color: 0xffffff});
+                material.lights = true;
                 ground = new THREE.Mesh(geometry, material);
                 scene.add(ground);
 
                 renderer.render(scene, camera);
             }
 
-            function animate() {
+            /*function animate() {
                 requestAnimationFrame(animate);
 
+                theta += 0.01;
+                camera.lookAt(new THREE.Vector3(Math.cos(theta),Math.sin(theta),0));
+
                 renderer.render(scene, camera);
-            }
+            }*/
         </script>
     </body>
 </html>
