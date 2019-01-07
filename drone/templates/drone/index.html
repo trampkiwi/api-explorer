@@ -36,6 +36,8 @@
                     this.R = 6371000.0;
                     var h = 2 * Math.PI * this.R / 360;
 
+                    var vertices = this.attributes.position.array;
+
                     for(var i=0; i < this.vertices.length; i++) {
                         // recover x and y coordinates in datamap
                         var x = i % 1201;
@@ -45,8 +47,8 @@
                         var width = this.longToM(1, latIdx + latRemainder);
                         var height = h;
                         // map the vertex
-                        this.vertices[i].x *= width;
-                        this.vertices[i].y *= height;
+                        vertices[i].x *= width;
+                        vertices[i].y *= height;
                     }
                     
                     // ---- run xhr ----
@@ -70,10 +72,10 @@
 
                             for(var i = 0; i < dataArr.byteLength/2; i++) { // read elevation data bytewise
                                 var elevation = 256*dataArr[i] + dataArr[i+1]; // retrieve height data from byte array
-                                this.vertices[i].z = -elevation; // since -z => up
+                                vertices[i].z = -elevation; // since -z => up
                             }
 
-                            this.verticesNeedUpdate = true;
+                            this.attributes.position.needsUpdate = true;
 
                             console.log("Successfully retrieved data!");
                         } else {
