@@ -105,7 +105,7 @@
             var theta = 0;
 
             init();
-            //animate();
+            animate();
 
             function init() {
                 scene = new THREE.Scene();
@@ -152,14 +152,13 @@
                 renderer.render(scene, camera);
             }
 
-            /*function animate() {
+            function animate() {
                 requestAnimationFrame(animate);
 
-                theta += 0.01;
-                camera.lookAt(new THREE.Vector3(Math.cos(theta),Math.sin(theta),0));
+                camera.position.z+=1;
 
                 renderer.render(scene, camera);
-            }*/
+            }
         </script>
     </body>
 </html>
