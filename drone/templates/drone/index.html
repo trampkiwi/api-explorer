@@ -111,15 +111,15 @@
                 scene = new THREE.Scene();
 
                 light = new THREE.DirectionalLight();
-                light.position.set(-1, 0, -1).normalize();
+                light.position.set(-1, 0, 1).normalize();
                 light.castShadow = true;
                 scene.add(light);
 
                 //camera = new RoverCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000, 37.5886567, 126.9871959);
                 camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000);
-                camera.position.z = -100;
-                camera.up = new THREE.Vector3(0,-1,0);
-                camera.lookAt(new THREE.Vector3(0,0,0));
+                camera.position.z = 100;
+                //camera.up = new THREE.Vector3(0,-1,0);
+                //camera.lookAt(new THREE.Vector3(0,0,0));
 
                 renderer = new THREE.WebGLRenderer();
                 renderer.setSize(window.innerWidth, window.innerHeight);
