@@ -71,6 +71,7 @@
                             for(var i = 0; i < dataArr.byteLength/2; i++) { // read elevation data bytewise
                                 var elevation = 256*dataArr[i] + dataArr[i+1]; // retrieve height data from byte array
                                 vertices[3*i + 2] = -elevation; // since -z => up
+                                console.log(elevation);
                             }
 
                             this.attributes.position.needsUpdate = true;
@@ -110,10 +111,10 @@
             function init() {
                 scene = new THREE.Scene();
 
-                light = new THREE.DirectionalLight();
+                /*light = new THREE.DirectionalLight();
                 light.position.set(-1, 0, 1).normalize();
                 light.castShadow = true;
-                scene.add(light);
+                scene.add(light);*/
 
                 //camera = new RoverCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000, 37.5886567, 126.9871959);
                 camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000);
@@ -145,8 +146,8 @@
                 geometry = new GroundGeometry(37, 126);
                 material = new THREE.MeshStandardMaterial({color: 0xffffff});
                 ground = new THREE.Mesh(geometry, material);
-                ground.castShadow = true;
-                ground.receiveShadow = true;
+                //ground.castShadow = true;
+                //ground.receiveShadow = true;
                 scene.add(ground);
 
                 renderer.render(scene, camera);
