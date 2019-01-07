@@ -57,7 +57,7 @@
                     
                     // ---- run xhr ----
                     // construct height datamap request url string
-                    var reqStrLat = (latIdx > 0 ? "N" : "S") + latIdx.toString();
+                    /*var reqStrLat = (latIdx > 0 ? "N" : "S") + latIdx.toString();
                     var reqStrLong = (longIdx > 0 ? "E" : "W") + longIdx.toString();
                     var reqStr = "https://s3.ap-northeast-2.amazonaws.com/kiwiprojcdn/elvdata/" + reqStrLat + reqStrLong + ".hgt";
                     // make xhr
@@ -101,7 +101,8 @@
 
                     // ---- resume xhr ----
                     req.onload = importElevationData.bind(this);
-                    req.send(null);
+                    req.send(null);*/
+                    console.log(vertices);
                 }
 
                 longToM(longDeg, atLat) { // convert degree-length longDeg to m at latitude atLat
@@ -123,7 +124,7 @@
             var theta = 0;
 
             init();
-            //animate();
+            animate();
 
             function init() {
                 scene = new THREE.Scene();
