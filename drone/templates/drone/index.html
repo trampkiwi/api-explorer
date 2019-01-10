@@ -5,116 +5,9 @@
     </head>
     <body>
         <script src="https://s3.ap-northeast-2.amazonaws.com/kiwiprojcdn/libs/three.js"></script>
-        <!-- <script src="http://kiwiprojcdn.herokuapp.com/htdocs/js/rovercamera.js"></script>-->
-
-        <script>
-            // ---- define some functions for later use ----
-            Math.degrees = function(radian) {
-                return radian / (2*Math.PI) * 360;
-            }
-
-            Math.radians = function(degrees) {
-                return degrees / 360 * (2*Math.PI);
-            }
-
-            // ---- define GroundGeometry class ----
-            // ~ disclaimer on the coordinate system
-            // ~ 1 metre corresponds to 1 'three.js coordinate system length'
-            // ~ x axis: - => east, + => west
-            // ~ y axis: - => north, + => south
-            // ~ z axis: - => down, + => up
-            class GroundGeometry extends THREE.PlaneBufferGeometry {
-                constructor(latIdx, longIdx) { // both are floored lat, long
-                    // ---- call super ----
-                    //super(1, 1, 1200, 1200);
-                    super(1, 1, 10, 10);
-
-                    // ---- transform vertices to accurately depict earth's surface ----
-                    // ~ the final vertices map will 'look' trapezoidal.
-                    // ~ h: height
-                    // ~ the earth's shape is assumed to be completely spherical,
-                    // ~ and the radius is 6371km = 6371000m.
-                    this.R = 6371000.0;
-                    var h = 2 * Math.PI * this.R / 360;
-
-                    var vertices = this.attributes.position.array;
-
-                    /*for(var i=0; i < vertices.length; i++) {
-                        // recover x and y coordinates in datamap
-                        var x = i % 1201;
-                        var y = (i - x) / 1201;
-                        // calculate constants
-                        var latRemainder = 1 - (y / 1201);
-                        var width = this.longToM(1, latIdx + latRemainder);
-                        var height = h;
-                        // map the vertex
-                        vertices[3*i] *= width;
-                        vertices[3*i + 1] *= height;
-
-                        if(x > 10) {i += 1201 - 11}
-                        if(y > 10) {break;}
-                    }*/
-                    
-                    // ---- run xhr ----
-                    // construct height datamap request url string
-                    var reqStrLat = (latIdx > 0 ? "N" : "S") + latIdx.toString();
-                    var reqStrLong = (longIdx > 0 ? "E" : "W") + longIdx.toString();
-                    var reqStr = "https://s3.ap-northeast-2.amazonaws.com/kiwiprojcdn/elvdata/" + reqStrLat + reqStrLong + ".hgt";
-                    // make xhr
-                    var req = new XMLHttpRequest();
-                    req.open("GET", reqStr);
-                    req.responseType = "arraybuffer";
-
-                    // ---- generate ground geometry ----
-                    var importElevationData = function() {
-                        var buffer = req.response;
-
-                        if(buffer) {
-                            var dataArr = new Uint8Array(buffer);
-
-                            var x = 0;
-                            var y = 0;
-                            for(var i = 0; i < dataArr.byteLength/2; i++) { // read elevation data bytewise
-                                console.log(x.toString() + ", " + y.toString());
-                                if(x > 10) {
-                                    x = 0;
-                                    i += 1201 - 11;
-                                    y++;
-                                }
-                                if(y > 10) {
-                                    break;
-                                }
-                                var elevation = 256*dataArr[2*i] + dataArr[2*i + 1]; // retrieve height data from byte array
-                                vertices[3*i + 2] = elevation/10; // since -z => up
-                                x++;
-                                //console.log(elevation);
-                            }
-
-                            this.attributes.position.needsUpdate = true;
-
-                            console.log(this.attributes.position.array);
-
-                            console.log("Successfully retrieved data!");
-                        } else {
-                            console.log("There was a faliure while reading height data map. (index.html: line 134)");
-                        }
-                    }
-
-                    // ---- resume xhr ----
-                    req.onload = importElevationData.bind(this);
-                    req.send(null);
-
-                    console.log(vertices);
-                }
-
-                longToM(longDeg, atLat) { // convert degree-length longDeg to m at latitude atLat
-                    var r = this.R * Math.cos(Math.radians(Math.abs(atLat))); // radius of cross-section circle
-                    var c = 2 * Math.PI * r; // circumference of the cross-section
-                    var l = c / 360 * longDeg * 1000; // calculated m
-                    return l;
-                }
-            }
-        </script>
+        <script src="https://s3.ap-northeast-2.amazonaws.com/kiwiprojcdn/js/modifiedMath.js"></script>
+        <script src="https://s3.ap-northeast-2.amazonaws.com/kiwiprojcdn/js/groundGeometry.js"></script>
+        <script src="https://s3.ap-northeast-2.amazonaws.com/kiwiprojcdn/js/roverCamera.js"></script>
 
         <script>
             // 1 : 1 metre
@@ -125,65 +18,99 @@
 
             var theta = 0;
 
+            var mouseX, mouseY = 0;
+
             init();
             animate();
 
             function init() {
                 scene = new THREE.Scene();
 
-                /*light = new THREE.DirectionalLight();
-                light.position.set(-1, 0, 1).normalize();
+                light = new THREE.DirectionalLight(0xffffff, 1);
+                light.position.set(-10, 0, 10)
                 light.castShadow = true;
-                scene.add(light);*/
+                scene.add(light);
 
-                //camera = new RoverCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000, 37.5886567, 126.9871959);
-                camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000);
-                camera.position.z = 100;
-                //camera.up = new THREE.Vector3(0,-1,0);
-                //camera.lookAt(new THREE.Vector3(0,0,0));
+                camera = new RoverCamera(70, window.innerWidth / window.innerHeight, 0.01, 10000000
+                    ,37.496688, 130.866764);
+                //camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 10000000);
 
                 renderer = new THREE.WebGLRenderer();
                 renderer.setSize(window.innerWidth, window.innerHeight);
-                //renderer.shadowMap.enabled = true;
+                renderer.shadowMap.enabled = true;
                 document.body.appendChild(renderer.domElement);
 
-                //camera.generateGeometry(callback);
-                //geometry = new THREE.PlaneBufferGeometry(100,100,1,1);
-                //geometry = new THREE.BoxGeometry(1,1,1);
-
-                /*var callback = function(gmt) {
-                    geometry = gmt;
-                    material = new THREE.MeshDepthMaterial();
-                    ground = new THREE.Mesh(geometry, material);
-
-                    scene.add(ground);
-                    renderer.render(scene, camera);
-                }*/
-
-                //camera.up = new THREE.Vector3(0,0,1);
-                //camera.lookAt(new THREE.Vector3(Math.cos(theta),Math.sin(theta),0));
-
-                geometry = new GroundGeometry(37, 126);
-                console.log("post-init: " + geometry.vertices.toString());
-                /*var geo = new THREE.EdgesGeometry(geometry);
-                var mat = new THREE.LineBasicMaterial({color: 0xffffff, linewidth: 2})
-                var wireframe = new THREE.LineSegments(geo, mat);
-                scene.add(wireframe);*/
-                material = new THREE.MeshBasicMaterial({color: 0xffffff, wireframe: true, side: THREE.DoubleSide});
+                geometry = new GroundGeometry(37, 130, camera);
+                material = new THREE.MeshPhongMaterial({color: 0xffffff/*, side: THREE.DoubleSide*/});
                 ground = new THREE.Mesh(geometry, material);
-                //ground.castShadow = true;
-                //ground.receiveShadow = true;
+                ground.castShadow = true;
+                ground.receiveShadow = true;
                 scene.add(ground);
 
+                //camera.setGroundMesh(ground);
+
+                var yGeometry = new THREE.SphereBufferGeometry(1000);
+                var yMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
+                var yHelper = new THREE.Mesh(yGeometry, yMaterial);
+                yHelper.position.set(0, 30000, 0);
+                scene.add(yHelper);
+
+                var xGeometry = new THREE.SphereBufferGeometry(1000);
+                var xMaterial = new THREE.MeshBasicMaterial({color: 0x00ff00});
+                var xHelper = new THREE.Mesh(xGeometry, xMaterial);
+                xHelper.position.set(30000, 0, 0);
+                scene.add(xHelper);
+
+                /*var testGeometry = new THREE.SphereBufferGeometry(1000);
+                var testMaterial = new THREE.MeshBasicMaterial({color: 0xffff00});
+                var testHelper = new THREE.Mesh(testGeometry, testMaterial);
+                var coord = geometry.latlongToCoord(37.542049, 130.902103);
+                testHelper.position.set(coord[0], coord[1], 0);
+                scene.add(testHelper);*/
+
                 renderer.render(scene, camera);
+
+                //camera.setGroundMesh(ground);
             }
 
             function animate() {
                 requestAnimationFrame(animate);
 
-                
+                /*var pos = new THREE.Vector3(0, 0, 0);
+                var mag = (window.innerWidth - mouseX) * 1000;
+                var rot = (1 - (mouseY / window.innerHeight)) * (Math.PI / 2);
+                pos.set(0, -mag * Math.cos(rot), mag * Math.sin(rot));
 
+                camera.position.copy(pos);
+                camera.lookAt(0, 0, 0);*/
+
+                //camera.position.z += 10;
+
+                //camera.setGroundMesh(ground);
+
+                //camera.rotation.y += 0.01;
+
+                //console.log('1: ' + new Date().getTime().toString());
+                var ang = ((mouseX / window.innerWidth) - 1) * 360;
+                camera.face(ang);
+
+                //console.log('2: ' + new Date().getTime().toString());
+                ang = (1/2 - (mouseY / window.innerHeight)) * 90;
+                camera.lookUp(ang);
+
+                //console.log('3: ' + new Date().getTime().toString());
+                camera.updateAngle();
+
+                //console.log('4: ' + new Date().getTime().toString());
+                camera.forward(1);
+
+                //console.log('5: ' + new Date().getTime().toString());
                 renderer.render(scene, camera);
+            }
+
+            document.onmousemove = function(e) {
+                mouseX = e.pageX;
+                mouseY = e.pageY;
             }
         </script>
     </body>
